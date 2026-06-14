@@ -1,6 +1,6 @@
 from aiogram import BaseMiddleware
 from aiogram.types import TelegramObject, Message, CallbackQuery
-from aiogram.bot import Bot
+from aiogram import Bot
 from config import CHANNELS
 from typing import Callable, Dict, Any
 
