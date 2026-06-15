@@ -1,19 +1,20 @@
 import aiohttp
 from config import GEMINI_API_KEY
 
-API_URL = f"https://generativelanguage.googleapis.com/v1/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
 
 async def gemini_request(prompt: str) -> str:
     try:
         async with aiohttp.ClientSession() as session:
-            payload = {
-                "contents": [{"parts": [{"text": prompt}]}]
-            }
+            payload = {"contents": [{"parts": [{"text": prompt}]}]}
             async with session.post(API_URL, json=payload) as resp:
                 data = await resp.json()
-                return data["candidates"][0]["content"]["parts"][0]["text"]
+                if "candidates" in data:
+                    return data["candidates"][0]["content"]["parts"][0]["text"]
+                else:
+                    return f"API xatosi: {data}"
     except Exception as e:
-        return f"Xatolik yuz berdi: {e}"
+        return f"Xatolik: {e}"
 
 async def masala_ber(sinf: str, fan: str, lang: str) -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
@@ -36,11 +37,11 @@ async def tushuntir(mavzu: str, sinf: str, lang: str) -> str:
     return await gemini_request(prompt)
 
 async def test_ber(sinf: str, fan: str, lang: str) -> dict:
+    import json
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
     prompt = f"""Sen AI ustoz botsan. {sinf} uchun {fan} fanidan bitta test savol ber {til}.
 Faqat JSON formatda yoz, boshqa hech narsa yozma:
 {{"savol": "savol matni", "A": "variant", "B": "variant", "C": "variant", "D": "variant", "togri": "A"}}"""
-    import json
     text = await gemini_request(prompt)
     try:
         text = text.strip().replace("```json", "").replace("```", "")
