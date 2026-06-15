@@ -1,6 +1,5 @@
-from aiogram import BaseMiddleware
+from aiogram import BaseMiddleware, Bot
 from aiogram.types import TelegramObject, Message, CallbackQuery
-from aiogram import Bot
 from config import CHANNELS
 from typing import Callable, Dict, Any
 
@@ -22,11 +21,20 @@ class SubscriptionMiddleware(BaseMiddleware):
         data: Dict[str, Any]
     ) -> Any:
         bot = data["bot"]
-        
+
         if isinstance(event, Message):
             user_id = event.from_user.id
             if event.text and event.text.startswith("/start"):
                 return await handler(event, data)
+            subscribed = await check_subscription(bot, user_id)
+            if not subscribed:
+                from keyboards.inline_kb import sub_keyboard
+                await event.answer(
+                    "⚠️ Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
+                    reply_markup=sub_keyboard()
+                )
+                return
+
         elif isinstance(event, CallbackQuery):
             user_id = event.from_user.id
             if event.data == "check_sub":
@@ -38,17 +46,12 @@ class SubscriptionMiddleware(BaseMiddleware):
                 else:
                     await event.answer("❌ Hali obuna bo'lmadingiz!", show_alert=True)
                 return
+            subscribed = await check_subscription(bot, user_id)
+            if not subscribed:
+                await event.answer("⚠️ Avval kanallarga obuna bo'ling!", show_alert=True)
+                return
+
         else:
             return await handler(event, data)
 
-        subscribed = await check_subscription(bot, user_id)
-        if not subscribed:
-            from keyboards.inline_kb import sub_keyboard
-            if isinstance(event, Message):
-                await event.answer(
-                    "⚠️ Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
-                    reply_markup=sub_keyboard()
-                )
-            return
-        
         return await handler(event, data)
