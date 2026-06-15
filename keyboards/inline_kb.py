@@ -2,11 +2,16 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from config import CHANNELS
 
 def sub_keyboard() -> InlineKeyboardMarkup:
+    kanal_nomlari = [
+        "👨‍💻 Shahzodbek Coder",
+        "📁 FaylMaster Bot",
+        "💰 Hisobchi Bot",
+    ]
     buttons = [
-        [InlineKeyboardButton(text=f"📢 Kanal {i+1}", url=f"https://t.me/{ch.lstrip('@')}")] 
+        [InlineKeyboardButton(text=kanal_nomlari[i], url=f"https://t.me/{ch.lstrip('@')}")]
         for i, ch in enumerate(CHANNELS)
     ]
-    buttons.append([InlineKeyboardButton(text="✅ Tekshirish", callback_data="check_sub")])
+    buttons.append([InlineKeyboardButton(text="✅ Obunani tekshirish", callback_data="check_sub")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 def lang_keyboard() -> InlineKeyboardMarkup:
