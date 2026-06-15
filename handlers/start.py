@@ -1,31 +1,27 @@
-from aiogram import Router, F
+from aiogram import Router, F, Bot
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
-from aiogram.fsm.context import FSMContext
-from keyboards.inline_kb import lang_keyboard, sinf_keyboard, kurs_keyboard
+from keyboards.inline_kb import lang_keyboard, sinf_keyboard, kurs_keyboard, sub_keyboard
 from keyboards.main_kb import main_keyboard
 from database import get_db
+from middlewares.subscription import check_subscription
 
 router = Router()
 
 async def send_lang_menu(message: Message, user_id: int):
     db = get_db()
     cur = db.cursor()
-    cur.execute("SELECT lang FROM users WHERE tg_id = ?", (user_id,))
+    cur.execute("SELECT lang, sinf FROM users WHERE tg_id = ?", (user_id,))
     user = cur.fetchone()
     db.close()
     
-    if user and user["lang"]:
+    if user and user["lang"] and user["sinf"]:
         lang = user["lang"]
-        cur2 = get_db().cursor()
-        cur2.execute("SELECT sinf FROM users WHERE tg_id = ?", (user_id,))
-        u = cur2.fetchone()
-        if u and u["sinf"]:
-            await message.answer(
-                "✅ Xush kelibsiz!" if lang == "uz" else "✅ Добро пожаловать!" if lang == "ru" else "✅ Welcome!",
-                reply_markup=main_keyboard(lang)
-            )
-            return
+        await message.answer(
+            "✅ Xush kelibsiz!" if lang == "uz" else "✅ Добро пожаловать!" if lang == "ru" else "✅ Welcome!",
+            reply_markup=main_keyboard(lang)
+        )
+        return
     
     await message.answer(
         "🌐 Tilni tanlang / Выберите язык / Choose language:",
@@ -35,6 +31,17 @@ async def send_lang_menu(message: Message, user_id: int):
 @router.message(CommandStart())
 async def start_handler(message: Message):
     user = message.from_user
+    bot = message.bot
+    
+    # Obuna tekshiruvi
+    subscribed = await check_subscription(bot, user.id)
+    if not subscribed:
+        await message.answer(
+            "⚠️ Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
+            reply_markup=sub_keyboard()
+        )
+        return
+    
     db = get_db()
     cur = db.cursor()
     cur.execute(
@@ -43,6 +50,7 @@ async def start_handler(message: Message):
     )
     db.commit()
     db.close()
+    
     await send_lang_menu(message, user.id)
 
 @router.callback_query(F.data.startswith("lang_"))
