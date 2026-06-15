@@ -1,17 +1,6 @@
 from aiogram import BaseMiddleware, Bot
-from aiogram.types import TelegramObject, Message, CallbackQuery
-from config import CHANNELS
+from aiogram.types import TelegramObject
 from typing import Callable, Dict, Any
-
-async def check_subscription(bot: Bot, user_id: int) -> bool:
-    for channel in CHANNELS:
-        try:
-            member = await bot.get_chat_member(channel, user_id)
-            if member.status in ["left", "kicked", "banned"]:
-                return False
-        except:
-            return False
-    return True
 
 class SubscriptionMiddleware(BaseMiddleware):
     async def __call__(
@@ -20,38 +9,4 @@ class SubscriptionMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any]
     ) -> Any:
-        bot = data["bot"]
-
-        if isinstance(event, Message):
-            user_id = event.from_user.id
-            if event.text and event.text.startswith("/start"):
-                return await handler(event, data)
-            subscribed = await check_subscription(bot, user_id)
-            if not subscribed:
-                from keyboards.inline_kb import sub_keyboard
-                await event.answer(
-                    "⚠️ Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
-                    reply_markup=sub_keyboard()
-                )
-                return
-
-        elif isinstance(event, CallbackQuery):
-            user_id = event.from_user.id
-            if event.data == "check_sub":
-                subscribed = await check_subscription(bot, user_id)
-                if subscribed:
-                    await event.answer("✅ Obuna tasdiqlandi!")
-                    from handlers.start import send_lang_menu
-                    await send_lang_menu(event.message, user_id)
-                else:
-                    await event.answer("❌ Hali obuna bo'lmadingiz!", show_alert=True)
-                return
-            subscribed = await check_subscription(bot, user_id)
-            if not subscribed:
-                await event.answer("⚠️ Avval kanallarga obuna bo'ling!", show_alert=True)
-                return
-
-        else:
-            return await handler(event, data)
-
         return await handler(event, data)
