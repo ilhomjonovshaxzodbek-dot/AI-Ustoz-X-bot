@@ -2,7 +2,7 @@ import google.generativeai as genai
 from config import GEMINI_API_KEY
 
 genai.configure(api_key=GEMINI_API_KEY)
-model = genai.GenerativeModel("gemini-pro")
+model = genai.GenerativeModel("gemini-1.5-pro")
 
 async def gemini_request(prompt: str) -> str:
     try:
