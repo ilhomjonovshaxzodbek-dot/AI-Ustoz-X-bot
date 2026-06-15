@@ -1,7 +1,7 @@
 import aiohttp
 from config import GEMINI_API_KEY
 
-API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key={GEMINI_API_KEY}"
+API_URL = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp:generateContent?key={GEMINI_API_KEY}"
 
 async def gemini_request(prompt: str) -> str:
     try:
