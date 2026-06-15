@@ -1,10 +1,9 @@
-from aiogram import Router, F, Bot
+from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
-from keyboards.inline_kb import lang_keyboard, sinf_keyboard, kurs_keyboard, sub_keyboard
+from keyboards.inline_kb import lang_keyboard, sinf_keyboard, kurs_keyboard
 from keyboards.main_kb import main_keyboard
 from database import get_db
-from middlewares.subscription import check_subscription
 
 router = Router()
 
@@ -31,17 +30,6 @@ async def send_lang_menu(message: Message, user_id: int):
 @router.message(CommandStart())
 async def start_handler(message: Message):
     user = message.from_user
-    bot = message.bot
-    
-    # Obuna tekshiruvi
-    subscribed = await check_subscription(bot, user.id)
-    if not subscribed:
-        await message.answer(
-            "⚠️ Botdan foydalanish uchun quyidagi kanallarga obuna bo'ling:",
-            reply_markup=sub_keyboard()
-        )
-        return
-    
     db = get_db()
     cur = db.cursor()
     cur.execute(
@@ -50,7 +38,6 @@ async def start_handler(message: Message):
     )
     db.commit()
     db.close()
-    
     await send_lang_menu(message, user.id)
 
 @router.callback_query(F.data.startswith("lang_"))
@@ -61,7 +48,6 @@ async def lang_handler(call: CallbackQuery):
     cur.execute("UPDATE users SET lang = ? WHERE tg_id = ?", (lang, call.from_user.id))
     db.commit()
     db.close()
-    
     await call.message.edit_text(
         "🎓 Sinfingizni tanlang:" if lang == "uz" else "🎓 Выберите класс:" if lang == "ru" else "🎓 Choose your class:",
         reply_markup=sinf_keyboard()
