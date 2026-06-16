@@ -47,12 +47,34 @@ def create_tables():
             FOREIGN KEY (user_id) REFERENCES users(tg_id)
         );
         
-        CREATE TABLE IF NOT EXISTS kunlik_masalalar (
+        CREATE TABLE IF NOT EXISTS sevimli_fanlar (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             user_id INTEGER,
-            masala TEXT,
-            sana DATE DEFAULT (date('now')),
+            fan TEXT,
             FOREIGN KEY (user_id) REFERENCES users(tg_id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS yutuqlar (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            nomi TEXT,
+            tavsif TEXT,
+            sana TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (user_id) REFERENCES users(tg_id)
+        );
+        
+        CREATE TABLE IF NOT EXISTS bellashuv (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            boshlagan INTEGER,
+            raqib INTEGER,
+            fan TEXT,
+            savol_soni INTEGER,
+            boshlagan_ball INTEGER DEFAULT 0,
+            raqib_ball INTEGER DEFAULT 0,
+            boshlagan_savol INTEGER DEFAULT 0,
+            raqib_savol INTEGER DEFAULT 0,
+            holat TEXT DEFAULT 'kutish',
+            sana TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
     
