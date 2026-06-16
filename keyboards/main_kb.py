@@ -11,6 +11,7 @@ TEXTS = {
         "natija": "📊 Natijalarim",
         "reyting": "🏆 Reyting",
         "sozlama": "⚙️ Sozlamalar",
+        "yordam": "🆘 Yordam",
     },
     "ru": {
         "masala": "📚 Получить задачу",
@@ -22,6 +23,7 @@ TEXTS = {
         "natija": "📊 Мои результаты",
         "reyting": "🏆 Рейтинг",
         "sozlama": "⚙️ Настройки",
+        "yordam": "🆘 Помощь",
     },
     "en": {
         "masala": "📚 Get Task",
@@ -33,6 +35,7 @@ TEXTS = {
         "natija": "📊 My Results",
         "reyting": "🏆 Ranking",
         "sozlama": "⚙️ Settings",
+        "yordam": "🆘 Help",
     }
 }
 
@@ -44,7 +47,7 @@ def main_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
             [KeyboardButton(text=t["tushuntir"]), KeyboardButton(text=t["test"])],
             [KeyboardButton(text=t["insho"]), KeyboardButton(text=t["eslatma"])],
             [KeyboardButton(text=t["natija"]), KeyboardButton(text=t["reyting"])],
-            [KeyboardButton(text=t["sozlama"])],
+            [KeyboardButton(text=t["sozlama"]), KeyboardButton(text=t["yordam"])],
         ],
         resize_keyboard=True
     )
