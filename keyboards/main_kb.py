@@ -16,6 +16,7 @@ TEXTS = {
         "yutuqlar": "🏅 Yutuqlar",
         "haftalik": "📈 Haftalik hisobot",
         "sevimli": "📌 Sevimli fanlar",
+        "bekor": "❌ Bekor qilish",
     },
     "ru": {
         "masala": "📚 Получить задачу",
@@ -32,6 +33,7 @@ TEXTS = {
         "yutuqlar": "🏅 Достижения",
         "haftalik": "📈 Недельный отчёт",
         "sevimli": "📌 Любимые предметы",
+        "bekor": "❌ Отмена",
     },
     "en": {
         "masala": "📚 Get Task",
@@ -48,6 +50,7 @@ TEXTS = {
         "yutuqlar": "🏅 Achievements",
         "haftalik": "📈 Weekly Report",
         "sevimli": "📌 Favorite Subjects",
+        "bekor": "❌ Cancel",
     }
 }
 
@@ -62,6 +65,15 @@ def main_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
             [KeyboardButton(text=t["bellashuv"]), KeyboardButton(text=t["yutuqlar"])],
             [KeyboardButton(text=t["haftalik"]), KeyboardButton(text=t["sevimli"])],
             [KeyboardButton(text=t["sozlama"]), KeyboardButton(text=t["yordam"])],
+        ],
+        resize_keyboard=True
+    )
+
+def bekor_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
+    t = TEXTS.get(lang, TEXTS["uz"])
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text=t["bekor"])],
         ],
         resize_keyboard=True
     )
