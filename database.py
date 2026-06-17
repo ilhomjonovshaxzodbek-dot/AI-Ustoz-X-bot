@@ -71,8 +71,10 @@ def create_tables():
             savol_soni INTEGER,
             boshlagan_ball INTEGER DEFAULT 0,
             raqib_ball INTEGER DEFAULT 0,
-            boshlagan_savol INTEGER DEFAULT 0,
-            raqib_savol INTEGER DEFAULT 0,
+            boshlagan_savol INTEGER DEFAULT 1,
+            raqib_savol INTEGER DEFAULT 1,
+            boshlagan_joriy_savol TEXT,
+            raqib_joriy_savol TEXT,
             holat TEXT DEFAULT 'kutish',
             sana TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
