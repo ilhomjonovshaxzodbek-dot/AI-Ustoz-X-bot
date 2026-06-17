@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from keyboards.main_kb import main_keyboard, TEXTS
+from keyboards.main_kb import main_keyboard, bekor_keyboard, TEXTS
 from database import get_db
 from utils.gemini import insho_tekshir
 
@@ -31,21 +31,43 @@ async def insho_handler(message: Message, state: FSMContext):
     lang = user["lang"]
     await state.set_state(InshoState.mavzu_kutish)
     await message.answer(
-        "📝 Insho mavzusini yozing:" if lang == "uz" else "📝 Напишите тему сочинения:" if lang == "ru" else "📝 Write the essay topic:"
+        "📝 Insho mavzusini yozing:" if lang == "uz" else "📝 Напишите тему сочинения:" if lang == "ru" else "📝 Write the essay topic:",
+        reply_markup=bekor_keyboard(lang)
     )
 
 @router.message(InshoState.mavzu_kutish)
 async def mavzu_handler(message: Message, state: FSMContext):
+    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
+        user = get_user(message.from_user.id)
+        lang = user["lang"] if user else "uz"
+        await state.clear()
+        await message.answer(
+            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+            reply_markup=main_keyboard(lang)
+        )
+        return
+    
     user = get_user(message.from_user.id)
     lang = user["lang"]
     await state.update_data(mavzu=message.text)
     await state.set_state(InshoState.matn_kutish)
     await message.answer(
-        "✏️ Inshoingizni yozing:" if lang == "uz" else "✏️ Напишите ваше сочинение:" if lang == "ru" else "✏️ Write your essay:"
+        "✏️ Inshoingizni yozing:" if lang == "uz" else "✏️ Напишите ваше сочинение:" if lang == "ru" else "✏️ Write your essay:",
+        reply_markup=bekor_keyboard(lang)
     )
 
 @router.message(InshoState.matn_kutish)
 async def matn_handler(message: Message, state: FSMContext):
+    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
+        user = get_user(message.from_user.id)
+        lang = user["lang"] if user else "uz"
+        await state.clear()
+        await message.answer(
+            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+            reply_markup=main_keyboard(lang)
+        )
+        return
+    
     user = get_user(message.from_user.id)
     lang = user["lang"]
     sinf = user["sinf"]
