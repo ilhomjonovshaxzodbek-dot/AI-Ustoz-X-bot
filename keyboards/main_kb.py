@@ -12,6 +12,10 @@ TEXTS = {
         "reyting": "🏆 Reyting",
         "sozlama": "⚙️ Sozlamalar",
         "yordam": "🆘 Yordam",
+        "bellashuv": "⚔️ Bilim bellashuvi",
+        "yutuqlar": "🏅 Yutuqlar",
+        "haftalik": "📈 Haftalik hisobot",
+        "sevimli": "📌 Sevimli fanlar",
     },
     "ru": {
         "masala": "📚 Получить задачу",
@@ -24,6 +28,10 @@ TEXTS = {
         "reyting": "🏆 Рейтинг",
         "sozlama": "⚙️ Настройки",
         "yordam": "🆘 Помощь",
+        "bellashuv": "⚔️ Битва знаний",
+        "yutuqlar": "🏅 Достижения",
+        "haftalik": "📈 Недельный отчёт",
+        "sevimli": "📌 Любимые предметы",
     },
     "en": {
         "masala": "📚 Get Task",
@@ -36,6 +44,10 @@ TEXTS = {
         "reyting": "🏆 Ranking",
         "sozlama": "⚙️ Settings",
         "yordam": "🆘 Help",
+        "bellashuv": "⚔️ Knowledge Battle",
+        "yutuqlar": "🏅 Achievements",
+        "haftalik": "📈 Weekly Report",
+        "sevimli": "📌 Favorite Subjects",
     }
 }
 
@@ -47,6 +59,8 @@ def main_keyboard(lang: str = "uz") -> ReplyKeyboardMarkup:
             [KeyboardButton(text=t["tushuntir"]), KeyboardButton(text=t["test"])],
             [KeyboardButton(text=t["insho"]), KeyboardButton(text=t["eslatma"])],
             [KeyboardButton(text=t["natija"]), KeyboardButton(text=t["reyting"])],
+            [KeyboardButton(text=t["bellashuv"]), KeyboardButton(text=t["yutuqlar"])],
+            [KeyboardButton(text=t["haftalik"]), KeyboardButton(text=t["sevimli"])],
             [KeyboardButton(text=t["sozlama"]), KeyboardButton(text=t["yordam"])],
         ],
         resize_keyboard=True
