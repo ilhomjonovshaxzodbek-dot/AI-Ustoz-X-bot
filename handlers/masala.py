@@ -46,7 +46,6 @@ async def fan_tanlash_handler(call: CallbackQuery, state: FSMContext):
     await call.message.edit_text("⏳ Masala tayyorlanmoqda..." if lang == "uz" else "⏳ Готовлю задачу..." if lang == "ru" else "⏳ Preparing task...")
     
     masala = await masala_ber(sinf, fan, lang)
-    
     await state.update_data(masala=masala, fan=fan)
     await state.set_state(MasalaState.javob_kutish)
     
@@ -80,3 +79,6 @@ async def javob_handler(message: Message, state: FSMContext):
     
     await state.clear()
     await message.answer(natija, reply_markup=main_keyboard(lang))
+    
+    from handlers.yutuqlar import yutuq_tekshir
+    await yutuq_tekshir(message.bot, message.from_user.id)
