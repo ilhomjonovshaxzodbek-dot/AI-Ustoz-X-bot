@@ -22,7 +22,7 @@ def get_user(user_id):
     db.close()
     return user
 
-def test_keyboard(togri: str) -> InlineKeyboardMarkup:
+def test_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="A", callback_data="test_A"),
@@ -75,7 +75,7 @@ async def test_fan_handler(call: CallbackQuery, state: FSMContext):
         f"C) {test['C']}\n"
         f"D) {test['D']}"
     )
-    await call.message.edit_text(text, parse_mode="Markdown", reply_markup=test_keyboard(test["togri"]))
+    await call.message.edit_text(text, parse_mode="Markdown", reply_markup=test_keyboard())
 
 @router.callback_query(F.data.startswith("test_"), TestState.javob_kutish)
 async def test_javob_handler(call: CallbackQuery, state: FSMContext):
@@ -84,7 +84,6 @@ async def test_javob_handler(call: CallbackQuery, state: FSMContext):
     lang = user["lang"]
     data = await state.get_data()
     test = data.get("test")
-    
     togri = test["togri"]
     
     db = get_db()
@@ -101,11 +100,14 @@ async def test_javob_handler(call: CallbackQuery, state: FSMContext):
         text = "✅ To'g'ri!" if lang == "uz" else "✅ Правильно!" if lang == "ru" else "✅ Correct!"
     else:
         text = (
-            f"❌ Noto'g'ri! To'g'ri javob: {togri}" if lang == "uz"
-            else f"❌ Неправильно! Правильный ответ: {togri}" if lang == "ru"
-            else f"❌ Wrong! Correct answer: {togri}"
+            f"❌ Noto'g'ri! To'g'ri javob: *{togri}*" if lang == "uz"
+            else f"❌ Неправильно! Правильный ответ: *{togri}*" if lang == "ru"
+            else f"❌ Wrong! Correct answer: *{togri}*"
         )
     
     await state.clear()
-    await call.message.edit_text(text)
+    await call.message.edit_text(text, parse_mode="Markdown")
     await call.message.answer("📋 Menyu:", reply_markup=main_keyboard(lang))
+    
+    from handlers.yutuqlar import yutuq_tekshir
+    await yutuq_tekshir(call.bot, call.from_user.id)
