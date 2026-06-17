@@ -1,6 +1,5 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
-from aiogram.fsm.context import FSMContext
 from keyboards.main_kb import main_keyboard, sozlamalar_keyboard, TEXTS
 from keyboards.inline_kb import lang_keyboard, sinf_keyboard
 from database import get_db
@@ -34,6 +33,14 @@ YORDAM_MATNI = {
 
 🏆 *Reyting* — Eng faol o'quvchilar ro'yxati.
 
+⚔️ *Bilim bellashuvi* — Boshqa o'quvchi bilan bellashasiz. Fan tanlab, raqib tanlaysiz va savollarga javob berasiz. G'olib aniqlanadi!
+
+🏅 *Yutuqlar* — Masala va test yechganda badge olasiz. Yangi yutuq olganda hamma xabardor bo'ladi!
+
+📈 *Haftalik hisobot* — Bu hafta kim ko'p o'qiganini ko'rasiz. Har dushanba avtomatik yuboriladi.
+
+📌 *Sevimli fanlar* — O'zingizga yoqadigan fanlarni belgilaysiz.
+
 ⚙️ *Sozlamalar* — Tilni yoki sinf/kursni o'zgartirasiz.""",
 
     "ru": """❓ *Помощь — AI Ustoz X bot*
@@ -54,6 +61,14 @@ YORDAM_MATNI = {
 
 🏆 *Рейтинг* — Список самых активных учеников.
 
+⚔️ *Битва знаний* — Соревнуетесь с другим учеником. Выбираете предмет и соперника, отвечаете на вопросы. Определяется победитель!
+
+🏅 *Достижения* — Получаете badge за решение задач и тестов. Все узнают о новом достижении!
+
+📈 *Недельный отчёт* — Видите кто больше учился на этой неделе. Отправляется каждый понедельник автоматически.
+
+📌 *Любимые предметы* — Отмечаете предметы которые вам нравятся.
+
 ⚙️ *Настройки* — Меняете язык или класс/курс.""",
 
     "en": """❓ *Help — AI Ustoz X bot*
@@ -73,6 +88,14 @@ YORDAM_MATNI = {
 📊 *My Results* — Shows how many tasks and tests completed.
 
 🏆 *Ranking* — List of most active students.
+
+⚔️ *Knowledge Battle* — Compete with another student. Choose subject and opponent, answer questions. Winner is determined!
+
+🏅 *Achievements* — Get badges for solving tasks and tests. Everyone gets notified about new achievements!
+
+📈 *Weekly Report* — See who studied most this week. Sent every Monday automatically.
+
+📌 *Favorite Subjects* — Mark subjects you like.
 
 ⚙️ *Settings* — Change language or class/course."""
 }
