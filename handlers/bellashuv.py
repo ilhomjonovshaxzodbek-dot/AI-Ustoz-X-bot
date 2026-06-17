@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from keyboards.inline_kb import fan_keyboard
-from keyboards.main_kb import main_keyboard, TEXTS
+from keyboards.main_kb import main_keyboard, bekor_keyboard, TEXTS
 from database import get_db
 from utils.gemini import groq_request
 
@@ -79,13 +79,46 @@ async def bellashuv_handler(message: Message, state: FSMContext):
     lang = user["lang"]
     await state.set_state(BellashuvState.fan_tanlash)
     
-    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
     fanlar_kb = fan_keyboard(lang)
     fanlar_kb.inline_keyboard.append([InlineKeyboardButton(text="❌ Bekor qilish", callback_data="bekor_bellashuv")])
     
     await message.answer(
         "⚔️ Qaysi fandan bellashasiz?" if lang == "uz" else "⚔️ По какому предмету?" if lang == "ru" else "⚔️ Which subject?",
+        reply_markup=bekor_keyboard(lang)
+    )
+    await message.answer(
+        "👇 Fanni tanlang:" if lang == "uz" else "👇 Выберите предмет:" if lang == "ru" else "👇 Choose subject:",
         reply_markup=fanlar_kb
+    )
+
+@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), BellashuvState.fan_tanlash)
+async def bekor_fan_tanlash(message: Message, state: FSMContext):
+    user = get_user(message.from_user.id)
+    lang = user["lang"] if user else "uz"
+    await state.clear()
+    await message.answer(
+        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+        reply_markup=main_keyboard(lang)
+    )
+
+@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), BellashuvState.raqib_tanlash)
+async def bekor_raqib_tanlash(message: Message, state: FSMContext):
+    user = get_user(message.from_user.id)
+    lang = user["lang"] if user else "uz"
+    await state.clear()
+    await message.answer(
+        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+        reply_markup=main_keyboard(lang)
+    )
+
+@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), BellashuvState.savol_soni)
+async def bekor_savol_soni(message: Message, state: FSMContext):
+    user = get_user(message.from_user.id)
+    lang = user["lang"] if user else "uz"
+    await state.clear()
+    await message.answer(
+        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+        reply_markup=main_keyboard(lang)
     )
 
 @router.callback_query(F.data == "bekor_bellashuv")
@@ -120,7 +153,10 @@ async def bekor_b_handler(call: CallbackQuery, bot: Bot):
     db.close()
     
     await call.message.edit_text("❌ Bellashuv bekor qilindi.")
-    await call.message.answer("📋 Menyu:", reply_markup=main_keyboard(lang))
+    await call.message.answer(
+        "📋 Menyu:" if lang == "uz" else "📋 Меню:" if lang == "ru" else "📋 Menu:",
+        reply_markup=main_keyboard(lang)
+    )
 
 @router.callback_query(F.data.startswith("fan_"), BellashuvState.fan_tanlash)
 async def fan_tanlash_handler(call: CallbackQuery, state: FSMContext):
@@ -283,6 +319,16 @@ async def bsoni_handler(call: CallbackQuery, state: FSMContext, bot: Bot):
 
 @router.message(BellashuvState.savol_soni)
 async def savol_soni_handler(message: Message, state: FSMContext, bot: Bot):
+    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
+        user = get_user(message.from_user.id)
+        lang = user["lang"] if user else "uz"
+        await state.clear()
+        await message.answer(
+            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+            reply_markup=main_keyboard(lang)
+        )
+        return
+    
     try:
         soni = int(message.text.strip())
         if soni < 5:
@@ -345,7 +391,7 @@ async def yuborish_savol(bot: Bot, b, user_id: int, user_data, savol_raqam: int)
         parse_mode="Markdown"
     )
 
-@router.message(F.text & ~F.text.startswith("/"))
+@router.message(F.text & ~F.text.startswith("/") & ~F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]))
 async def bellashuv_javob_handler(message: Message, bot: Bot):
     user_id = message.from_user.id
     b = active_bellashuv(user_id)
@@ -447,8 +493,9 @@ Javobni tekshir {til}. Birinchi qatorda faqat 'TOGRI' yoki 'NOTOGRI' deb yoz, ke
     
     elif keyingi_savol_raqam <= savol_soni:
         await yuborish_savol(bot, b_yangi, user_id, user, keyingi_savol_raqam)
-    
     else:
         await message.answer(
-            "⏳ Raqibingiz hali savollarini yechmagan. Natija ular tugagach e'lon qilinadi.",
+            "⏳ Raqibingiz hali savollarini yechmagan. Natija ular tugagach e'lon qilinadi." if lang == "uz"
+            else "⏳ Ваш соперник ещё не завершил. Результат будет объявлен позже." if lang == "ru"
+            else "⏳ Your opponent hasn't finished yet. Result will be announced later."
         )
