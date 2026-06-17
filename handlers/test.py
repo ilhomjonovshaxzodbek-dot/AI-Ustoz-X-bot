@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from keyboards.inline_kb import fan_keyboard
-from keyboards.main_kb import main_keyboard, TEXTS
+from keyboards.main_kb import main_keyboard, bekor_keyboard, TEXTS
 from database import get_db
 from utils.gemini import test_ber
 
@@ -46,6 +46,10 @@ async def test_handler(message: Message, state: FSMContext):
     await state.set_state(TestState.fan_tanlash)
     await message.answer(
         "🎯 Fan tanlang:" if lang == "uz" else "🎯 Выберите предмет:" if lang == "ru" else "🎯 Choose subject:",
+        reply_markup=bekor_keyboard(lang)
+    )
+    await message.answer(
+        "👇 Fanni tanlang:" if lang == "uz" else "👇 Выберите предмет:" if lang == "ru" else "👇 Choose subject:",
         reply_markup=fan_keyboard(lang)
     )
 
@@ -76,6 +80,16 @@ async def test_fan_handler(call: CallbackQuery, state: FSMContext):
         f"D) {test['D']}"
     )
     await call.message.edit_text(text, parse_mode="Markdown", reply_markup=test_keyboard())
+
+@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), TestState.fan_tanlash)
+async def test_bekor_fan(message: Message, state: FSMContext):
+    user = get_user(message.from_user.id)
+    lang = user["lang"] if user else "uz"
+    await state.clear()
+    await message.answer(
+        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+        reply_markup=main_keyboard(lang)
+    )
 
 @router.callback_query(F.data.startswith("test_"), TestState.javob_kutish)
 async def test_javob_handler(call: CallbackQuery, state: FSMContext):
