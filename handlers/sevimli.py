@@ -3,10 +3,13 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
-from keyboards.main_kb import main_keyboard, TEXTS
+from keyboards.main_kb import main_keyboard, bekor_keyboard, TEXTS
 from database import get_db
 
 router = Router()
+
+class SevimliState(StatesGroup):
+    tanlash = State()
 
 FANLAR = {
     "uz": ["Matematika", "Fizika", "Kimyo", "Biologiya", "Tarix", "Ingliz tili", "Adabiyot", "Informatika", "Geografiya", "Ona tili"],
@@ -37,7 +40,7 @@ def sevimli_fan_keyboard(lang, tanlangan):
             row = []
     if row:
         buttons.append(row)
-    buttons.append([InlineKeyboardButton(text="✅ Saqlash", callback_data="sfan_saqlash")])
+    buttons.append([InlineKeyboardButton(text="💾 Saqlash", callback_data="sfan_saqlash")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 @router.message(F.text.in_([
@@ -53,11 +56,26 @@ async def sevimli_handler(message: Message, state: FSMContext):
     tanlangan = [r["fan"] for r in cur.fetchall()]
     db.close()
     
+    await state.set_state(SevimliState.tanlash)
     await state.update_data(tanlangan=tanlangan)
     
     await message.answer(
         "📌 Sevimli fanlaringizni tanlang:" if lang == "uz" else "📌 Выберите любимые предметы:" if lang == "ru" else "📌 Choose your favorite subjects:",
+        reply_markup=bekor_keyboard(lang)
+    )
+    await message.answer(
+        "👇 Fanni bosing:" if lang == "uz" else "👇 Нажмите на предмет:" if lang == "ru" else "👇 Tap a subject:",
         reply_markup=sevimli_fan_keyboard(lang, tanlangan)
+    )
+
+@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), SevimliState.tanlash)
+async def sevimli_bekor(message: Message, state: FSMContext):
+    user = get_user(message.from_user.id)
+    lang = user["lang"] if user else "uz"
+    await state.clear()
+    await message.answer(
+        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+        reply_markup=main_keyboard(lang)
     )
 
 @router.callback_query(F.data.startswith("sfan_") & ~F.data.eq("sfan_saqlash"))
@@ -97,8 +115,11 @@ async def sfan_saqlash(call: CallbackQuery, state: FSMContext):
     
     await state.clear()
     await call.message.edit_text(
-        f"✅ Saqlandi! Sevimli fanlar: {', '.join(tanlangan) if tanlangan else 'Tanlanmagan'}" if lang == "uz"
-        else f"✅ Сохранено! Любимые предметы: {', '.join(tanlangan) if tanlangan else 'Не выбрано'}" if lang == "ru"
-        else f"✅ Saved! Favorite subjects: {', '.join(tanlangan) if tanlangan else 'None selected'}"
+        f"✅ Saqlandi!\n\n📌 Sevimli fanlar: {', '.join(tanlangan) if tanlangan else 'Tanlanmagan'}" if lang == "uz"
+        else f"✅ Сохранено!\n\n📌 Любимые предметы: {', '.join(tanlangan) if tanlangan else 'Не выбрано'}" if lang == "ru"
+        else f"✅ Saved!\n\n📌 Favorite subjects: {', '.join(tanlangan) if tanlangan else 'None selected'}"
     )
-    await call.message.answer("📋 Menyu:", reply_markup=main_keyboard(lang))
+    await call.message.answer(
+        "📋 Menyu:" if lang == "uz" else "📋 Меню:" if lang == "ru" else "📋 Menu:",
+        reply_markup=main_keyboard(lang)
+    )
