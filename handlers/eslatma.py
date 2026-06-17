@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.types import Message
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
-from keyboards.main_kb import main_keyboard, TEXTS
+from keyboards.main_kb import main_keyboard, bekor_keyboard, TEXTS
 from database import get_db
 
 router = Router()
@@ -23,7 +23,7 @@ def get_user(user_id):
 ]))
 async def eslatma_handler(message: Message, state: FSMContext):
     user = get_user(message.from_user.id)
-    lang = user["lang"]
+    lang = user["lang"] if user else "uz"
     
     db = get_db()
     cur = db.cursor()
@@ -31,24 +31,37 @@ async def eslatma_handler(message: Message, state: FSMContext):
     eslatma = cur.fetchone()
     db.close()
     
+    await state.set_state(EslatmaState.vaqt_kutish)
+    
     if eslatma and eslatma["active"]:
         await message.answer(
             f"🔔 Eslatma {eslatma['vaqt']} da o'rnatilgan.\n\nO'zgartirish uchun yangi vaqt yozing (HH:MM):" if lang == "uz"
             else f"🔔 Напоминание установлено на {eslatma['vaqt']}.\n\nДля изменения напишите новое время (HH:MM):" if lang == "ru"
-            else f"🔔 Reminder set at {eslatma['vaqt']}.\n\nTo change, write new time (HH:MM):"
+            else f"🔔 Reminder set at {eslatma['vaqt']}.\n\nTo change, write new time (HH:MM):",
+            reply_markup=bekor_keyboard(lang)
         )
     else:
         await message.answer(
             "🔔 Kunlik eslatma vaqtini kiriting (HH:MM formatda, masalan: 08:00):" if lang == "uz"
             else "🔔 Введите время ежедневного напоминания (формат HH:MM, например: 08:00):" if lang == "ru"
-            else "🔔 Enter daily reminder time (HH:MM format, e.g. 08:00):"
+            else "🔔 Enter daily reminder time (HH:MM format, e.g. 08:00):",
+            reply_markup=bekor_keyboard(lang)
         )
-    await state.set_state(EslatmaState.vaqt_kutish)
 
 @router.message(EslatmaState.vaqt_kutish)
 async def vaqt_handler(message: Message, state: FSMContext):
+    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
+        user = get_user(message.from_user.id)
+        lang = user["lang"] if user else "uz"
+        await state.clear()
+        await message.answer(
+            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+            reply_markup=main_keyboard(lang)
+        )
+        return
+    
     user = get_user(message.from_user.id)
-    lang = user["lang"]
+    lang = user["lang"] if user else "uz"
     vaqt = message.text.strip()
     
     import re
