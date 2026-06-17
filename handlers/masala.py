@@ -3,7 +3,7 @@ from aiogram.types import Message, CallbackQuery
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from keyboards.inline_kb import fan_keyboard
-from keyboards.main_kb import main_keyboard, TEXTS
+from keyboards.main_kb import main_keyboard, bekor_keyboard, TEXTS
 from database import get_db
 from utils.gemini import masala_ber, javob_tekshir
 
@@ -21,6 +21,18 @@ def get_user(user_id):
     db.close()
     return user
 
+@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]))
+async def bekor_handler(message: Message, state: FSMContext):
+    user = get_user(message.from_user.id)
+    lang = user["lang"] if user else "uz"
+    current_state = await state.get_state()
+    if current_state and "Masala" in current_state:
+        await state.clear()
+        await message.answer(
+            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+            reply_markup=main_keyboard(lang)
+        )
+
 @router.message(F.text.in_([
     TEXTS["uz"]["masala"], TEXTS["ru"]["masala"], TEXTS["en"]["masala"]
 ]))
@@ -33,6 +45,10 @@ async def masala_handler(message: Message, state: FSMContext):
     await state.set_state(MasalaState.fan_tanlash)
     await message.answer(
         "📚 Fan tanlang:" if lang == "uz" else "📚 Выберите предмет:" if lang == "ru" else "📚 Choose subject:",
+        reply_markup=bekor_keyboard(lang)
+    )
+    await message.answer(
+        "👇 Fanni tanlang:" if lang == "uz" else "👇 Выберите предмет:" if lang == "ru" else "👇 Choose subject:",
         reply_markup=fan_keyboard(lang)
     )
 
@@ -57,6 +73,16 @@ async def fan_tanlash_handler(call: CallbackQuery, state: FSMContext):
 
 @router.message(MasalaState.javob_kutish)
 async def javob_handler(message: Message, state: FSMContext):
+    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
+        user = get_user(message.from_user.id)
+        lang = user["lang"] if user else "uz"
+        await state.clear()
+        await message.answer(
+            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
+            reply_markup=main_keyboard(lang)
+        )
+        return
+    
     user = get_user(message.from_user.id)
     lang = user["lang"]
     sinf = user["sinf"]
