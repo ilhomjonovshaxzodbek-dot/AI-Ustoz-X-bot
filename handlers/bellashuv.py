@@ -23,36 +23,6 @@ def get_user(user_id):
     db.close()
     return user
 
-def raqib_keyboard(users, current_user_id):
-    buttons = []
-    for u in users:
-        if u["tg_id"] != current_user_id:
-            buttons.append([InlineKeyboardButton(
-                text=f"👤 {u['name']}",
-                callback_data=f"raqib_{u['tg_id']}"
-            )])
-    return InlineKeyboardMarkup(inline_keyboard=buttons)
-
-def raqib_taklif_keyboard(bellashuv_id):
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅ Qabul qilaman", callback_data=f"qabul_{bellashuv_id}")],
-        [InlineKeyboardButton(text="❌ Yo'q", callback_data=f"rad_{bellashuv_id}")],
-    ])
-
-def boshlash_keyboard():
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🎲 Bot tanlaydi", callback_data="raqib_bot")],
-        [InlineKeyboardButton(text="👤 O'zim tanlaymen", callback_data="raqib_ozim")],
-    ])
-
-def savol_soni_keyboard(bellashuv_id):
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="5️⃣ 5 ta", callback_data=f"bsoni_{bellashuv_id}_5")],
-        [InlineKeyboardButton(text="7️⃣ 7 ta", callback_data=f"bsoni_{bellashuv_id}_7")],
-        [InlineKeyboardButton(text="🔟 10 ta", callback_data=f"bsoni_{bellashuv_id}_10")],
-        [InlineKeyboardButton(text="✏️ O'zim kiritaman", callback_data=f"bsoni_{bellashuv_id}_0")],
-    ])
-
 def active_bellashuv(user_id):
     db = get_db()
     cur = db.cursor()
@@ -65,6 +35,39 @@ def active_bellashuv(user_id):
     db.close()
     return b
 
+def raqib_keyboard(users, current_user_id):
+    buttons = []
+    for u in users:
+        if u["tg_id"] != current_user_id:
+            buttons.append([InlineKeyboardButton(
+                text=f"👤 {u['name']}",
+                callback_data=f"raqib_{u['tg_id']}"
+            )])
+    buttons.append([InlineKeyboardButton(text="❌ Bekor qilish", callback_data="bekor_bellashuv")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+def raqib_taklif_keyboard(bellashuv_id):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✅ Qabul qilaman", callback_data=f"qabul_{bellashuv_id}")],
+        [InlineKeyboardButton(text="❌ Yo'q", callback_data=f"rad_{bellashuv_id}")],
+    ])
+
+def boshlash_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🎲 Bot tanlaydi", callback_data="raqib_bot")],
+        [InlineKeyboardButton(text="👤 O'zim tanlaymen", callback_data="raqib_ozim")],
+        [InlineKeyboardButton(text="❌ Bekor qilish", callback_data="bekor_bellashuv")],
+    ])
+
+def savol_soni_keyboard(bellashuv_id):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="5️⃣ 5 ta", callback_data=f"bsoni_{bellashuv_id}_5")],
+        [InlineKeyboardButton(text="7️⃣ 7 ta", callback_data=f"bsoni_{bellashuv_id}_7")],
+        [InlineKeyboardButton(text="🔟 10 ta", callback_data=f"bsoni_{bellashuv_id}_10")],
+        [InlineKeyboardButton(text="✏️ O'zim kiritaman", callback_data=f"bsoni_{bellashuv_id}_0")],
+        [InlineKeyboardButton(text="❌ Bekor qilish", callback_data=f"bekor_b_{bellashuv_id}")],
+    ])
+
 @router.message(F.text.in_([
     TEXTS["uz"]["bellashuv"], TEXTS["ru"]["bellashuv"], TEXTS["en"]["bellashuv"]
 ]))
@@ -75,10 +78,49 @@ async def bellashuv_handler(message: Message, state: FSMContext):
         return
     lang = user["lang"]
     await state.set_state(BellashuvState.fan_tanlash)
+    
+    from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+    fanlar_kb = fan_keyboard(lang)
+    fanlar_kb.inline_keyboard.append([InlineKeyboardButton(text="❌ Bekor qilish", callback_data="bekor_bellashuv")])
+    
     await message.answer(
         "⚔️ Qaysi fandan bellashasiz?" if lang == "uz" else "⚔️ По какому предмету?" if lang == "ru" else "⚔️ Which subject?",
-        reply_markup=fan_keyboard(lang)
+        reply_markup=fanlar_kb
     )
+
+@router.callback_query(F.data == "bekor_bellashuv")
+async def bekor_bellashuv_handler(call: CallbackQuery, state: FSMContext):
+    user = get_user(call.from_user.id)
+    lang = user["lang"] if user else "uz"
+    await state.clear()
+    await call.message.edit_text("❌ Bellashuv bekor qilindi.")
+    await call.message.answer(
+        "📋 Menyu:" if lang == "uz" else "📋 Меню:" if lang == "ru" else "📋 Menu:",
+        reply_markup=main_keyboard(lang)
+    )
+
+@router.callback_query(F.data.startswith("bekor_b_"))
+async def bekor_b_handler(call: CallbackQuery, bot: Bot):
+    bellashuv_id = int(call.data.split("_")[2])
+    user = get_user(call.from_user.id)
+    lang = user["lang"] if user else "uz"
+    
+    db = get_db()
+    cur = db.cursor()
+    cur.execute("SELECT * FROM bellashuv WHERE id = ?", (bellashuv_id,))
+    b = cur.fetchone()
+    if b:
+        cur.execute("UPDATE bellashuv SET holat = 'bekor' WHERE id = ?", (bellashuv_id,))
+        db.commit()
+        try:
+            other_id = b["raqib"] if call.from_user.id == b["boshlagan"] else b["boshlagan"]
+            await bot.send_message(other_id, "❌ Bellashuv bekor qilindi.")
+        except:
+            pass
+    db.close()
+    
+    await call.message.edit_text("❌ Bellashuv bekor qilindi.")
+    await call.message.answer("📋 Menyu:", reply_markup=main_keyboard(lang))
 
 @router.callback_query(F.data.startswith("fan_"), BellashuvState.fan_tanlash)
 async def fan_tanlash_handler(call: CallbackQuery, state: FSMContext):
@@ -198,7 +240,6 @@ async def qabul_handler(call: CallbackQuery, bot: Bot):
     db.close()
     
     await call.message.edit_text("✅ Qabul qildingiz! Bellashuv boshlanmoqda, kuting...")
-    
     await bot.send_message(
         b["boshlagan"],
         f"✅ *{call.from_user.full_name}* bellashuvni qabul qildi!\n\nNechta savol bo'lsin?",
@@ -260,7 +301,10 @@ async def savol_soni_handler(message: Message, state: FSMContext, bot: Bot):
 async def boshlash_bellashuv(bot: Bot, bellashuv_id: int, soni: int):
     db = get_db()
     cur = db.cursor()
-    cur.execute("UPDATE bellashuv SET savol_soni = ?, holat = 'jarayonda', boshlagan_savol = 1, raqib_savol = 1 WHERE id = ?", (soni, bellashuv_id))
+    cur.execute(
+        "UPDATE bellashuv SET savol_soni = ?, holat = 'jarayonda', boshlagan_savol = 1, raqib_savol = 1 WHERE id = ?",
+        (soni, bellashuv_id)
+    )
     cur.execute("SELECT * FROM bellashuv WHERE id = ?", (bellashuv_id,))
     b = cur.fetchone()
     db.commit()
@@ -305,7 +349,6 @@ async def yuborish_savol(bot: Bot, b, user_id: int, user_data, savol_raqam: int)
 async def bellashuv_javob_handler(message: Message, bot: Bot):
     user_id = message.from_user.id
     b = active_bellashuv(user_id)
-    
     if not b:
         return
     
@@ -315,11 +358,6 @@ async def bellashuv_javob_handler(message: Message, bot: Bot):
     savol_soni = b["savol_soni"]
     is_boshlagan = (user_id == b["boshlagan"])
     
-    db = get_db()
-    cur = db.cursor()
-    cur.execute("SELECT * FROM bellashuv WHERE id = ?", (b["id"],))
-    b = cur.fetchone()
-    
     if is_boshlagan:
         hozirgi_savol_raqam = b["boshlagan_savol"]
         togri_ball = b["boshlagan_ball"]
@@ -328,7 +366,9 @@ async def bellashuv_javob_handler(message: Message, bot: Bot):
         hozirgi_savol_raqam = b["raqib_savol"]
         togri_ball = b["raqib_ball"]
         joriy_savol = b["raqib_joriy_savol"]
-    db.close()
+    
+    if not joriy_savol:
+        return
     
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
     prompt = f"""Savol: {joriy_savol}
@@ -336,10 +376,11 @@ O'quvchi javobi: {message.text}
 Javobni tekshir {til}. Birinchi qatorda faqat 'TOGRI' yoki 'NOTOGRI' deb yoz, keyin tushuntir."""
     
     natija = await groq_request(prompt)
+    birinchi_qator = natija.strip().split("\n")[0].upper()
     
-    if "TOGRI" in natija.upper().split("\n")[0]:
+    if "TOGRI" in birinchi_qator and "NOTOGRI" not in birinchi_qator:
         togri_ball += 1
-        await message.answer(f"✅ To'g'ri! +1 ball\n\n{natija}")
+        await message.answer(f"✅ To'g'ri! +1 ball 🎉\n\n{natija}")
     else:
         await message.answer(f"❌ Noto'g'ri!\n\n{natija}")
     
@@ -348,11 +389,15 @@ Javobni tekshir {til}. Birinchi qatorda faqat 'TOGRI' yoki 'NOTOGRI' deb yoz, ke
     db = get_db()
     cur = db.cursor()
     if is_boshlagan:
-        cur.execute("UPDATE bellashuv SET boshlagan_ball = ?, boshlagan_savol = ? WHERE id = ?",
-                    (togri_ball, keyingi_savol_raqam, b["id"]))
+        cur.execute(
+            "UPDATE bellashuv SET boshlagan_ball = ?, boshlagan_savol = ?, boshlagan_joriy_savol = NULL WHERE id = ?",
+            (togri_ball, keyingi_savol_raqam, b["id"])
+        )
     else:
-        cur.execute("UPDATE bellashuv SET raqib_ball = ?, raqib_savol = ? WHERE id = ?",
-                    (togri_ball, keyingi_savol_raqam, b["id"]))
+        cur.execute(
+            "UPDATE bellashuv SET raqib_ball = ?, raqib_savol = ?, raqib_joriy_savol = NULL WHERE id = ?",
+            (togri_ball, keyingi_savol_raqam, b["id"])
+        )
     
     cur.execute("SELECT * FROM bellashuv WHERE id = ?", (b["id"],))
     b_yangi = cur.fetchone()
@@ -401,5 +446,9 @@ Javobni tekshir {til}. Birinchi qatorda faqat 'TOGRI' yoki 'NOTOGRI' deb yoz, ke
         await bot.send_message(b["raqib"], natija_xabar, parse_mode="Markdown")
     
     elif keyingi_savol_raqam <= savol_soni:
-        boshlagan_u = get_user(b["boshlagan"]) if is_boshlagan else get_user(b["raqib"])
         await yuborish_savol(bot, b_yangi, user_id, user, keyingi_savol_raqam)
+    
+    else:
+        await message.answer(
+            "⏳ Raqibingiz hali savollarini yechmagan. Natija ular tugagach e'lon qilinadi.",
+        )
