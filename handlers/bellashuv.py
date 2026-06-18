@@ -78,10 +78,8 @@ async def bellashuv_handler(message: Message, state: FSMContext):
         return
     lang = user["lang"]
     await state.set_state(BellashuvState.fan_tanlash)
-    
     fanlar_kb = fan_keyboard(lang)
     fanlar_kb.inline_keyboard.append([InlineKeyboardButton(text="❌ Bekor qilish", callback_data="bekor_bellashuv")])
-    
     await message.answer(
         "⚔️ Qaysi fandan bellashasiz?" if lang == "uz" else "⚔️ По какому предмету?" if lang == "ru" else "⚔️ Which subject?",
         reply_markup=bekor_keyboard(lang)
@@ -89,36 +87,6 @@ async def bellashuv_handler(message: Message, state: FSMContext):
     await message.answer(
         "👇 Fanni tanlang:" if lang == "uz" else "👇 Выберите предмет:" if lang == "ru" else "👇 Choose subject:",
         reply_markup=fanlar_kb
-    )
-
-@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), BellashuvState.fan_tanlash)
-async def bekor_fan_tanlash(message: Message, state: FSMContext):
-    user = get_user(message.from_user.id)
-    lang = user["lang"] if user else "uz"
-    await state.clear()
-    await message.answer(
-        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-        reply_markup=main_keyboard(lang)
-    )
-
-@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), BellashuvState.raqib_tanlash)
-async def bekor_raqib_tanlash(message: Message, state: FSMContext):
-    user = get_user(message.from_user.id)
-    lang = user["lang"] if user else "uz"
-    await state.clear()
-    await message.answer(
-        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-        reply_markup=main_keyboard(lang)
-    )
-
-@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), BellashuvState.savol_soni)
-async def bekor_savol_soni(message: Message, state: FSMContext):
-    user = get_user(message.from_user.id)
-    lang = user["lang"] if user else "uz"
-    await state.clear()
-    await message.answer(
-        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-        reply_markup=main_keyboard(lang)
     )
 
 @router.callback_query(F.data == "bekor_bellashuv")
@@ -137,7 +105,6 @@ async def bekor_b_handler(call: CallbackQuery, bot: Bot):
     bellashuv_id = int(call.data.split("_")[2])
     user = get_user(call.from_user.id)
     lang = user["lang"] if user else "uz"
-    
     db = get_db()
     cur = db.cursor()
     cur.execute("SELECT * FROM bellashuv WHERE id = ?", (bellashuv_id,))
@@ -151,12 +118,8 @@ async def bekor_b_handler(call: CallbackQuery, bot: Bot):
         except:
             pass
     db.close()
-    
     await call.message.edit_text("❌ Bellashuv bekor qilindi.")
-    await call.message.answer(
-        "📋 Menyu:" if lang == "uz" else "📋 Меню:" if lang == "ru" else "📋 Menu:",
-        reply_markup=main_keyboard(lang)
-    )
+    await call.message.answer("📋 Menyu:", reply_markup=main_keyboard(lang))
 
 @router.callback_query(F.data.startswith("fan_"), BellashuvState.fan_tanlash)
 async def fan_tanlash_handler(call: CallbackQuery, state: FSMContext):
@@ -179,12 +142,10 @@ async def raqib_bot_handler(call: CallbackQuery, state: FSMContext, bot: Bot):
     cur.execute("SELECT * FROM users WHERE tg_id != ? ORDER BY RANDOM() LIMIT 1", (call.from_user.id,))
     raqib = cur.fetchone()
     db.close()
-    
     if not raqib:
         await call.message.edit_text("❌ Hozircha boshqa o'quvchi yo'q!")
         await state.clear()
         return
-    
     data = await state.get_data()
     db = get_db()
     cur = db.cursor()
@@ -196,7 +157,6 @@ async def raqib_bot_handler(call: CallbackQuery, state: FSMContext, bot: Bot):
     db.commit()
     db.close()
     await state.clear()
-    
     await bot.send_message(
         raqib["tg_id"],
         f"⚔️ *{user['name']}* siz bilan *{data['fan']}* fanidan bellashishni xohlayapti!\n\nQabul qilasizmi?",
@@ -215,12 +175,10 @@ async def raqib_ozim_handler(call: CallbackQuery, state: FSMContext):
     cur.execute("SELECT * FROM users WHERE tg_id != ?", (call.from_user.id,))
     users = cur.fetchall()
     db.close()
-    
     if not users:
         await call.message.edit_text("❌ Hozircha boshqa o'quvchi yo'q!")
         await state.clear()
         return
-    
     await call.message.edit_text(
         "👤 Raqibni tanlang:",
         reply_markup=raqib_keyboard(users, call.from_user.id)
@@ -230,12 +188,10 @@ async def raqib_ozim_handler(call: CallbackQuery, state: FSMContext):
 async def raqib_tanlandi_handler(call: CallbackQuery, state: FSMContext, bot: Bot):
     if call.data in ["raqib_bot", "raqib_ozim"]:
         return
-    
     raqib_id = int(call.data.split("_")[1])
     user = get_user(call.from_user.id)
     raqib = get_user(raqib_id)
     data = await state.get_data()
-    
     db = get_db()
     cur = db.cursor()
     cur.execute(
@@ -246,7 +202,6 @@ async def raqib_tanlandi_handler(call: CallbackQuery, state: FSMContext, bot: Bo
     db.commit()
     db.close()
     await state.clear()
-    
     await bot.send_message(
         raqib_id,
         f"⚔️ *{user['name']}* siz bilan *{data['fan']}* fanidan bellashishni xohlayapti!\n\nQabul qilasizmi?",
@@ -265,16 +220,13 @@ async def qabul_handler(call: CallbackQuery, bot: Bot):
     cur = db.cursor()
     cur.execute("SELECT * FROM bellashuv WHERE id = ?", (bellashuv_id,))
     b = cur.fetchone()
-    
     if not b:
         await call.answer("❌ Bellashuv topilmadi!")
         db.close()
         return
-    
     cur.execute("UPDATE bellashuv SET holat = 'savol_kutish' WHERE id = ?", (bellashuv_id,))
     db.commit()
     db.close()
-    
     await call.message.edit_text("✅ Qabul qildingiz! Bellashuv boshlanmoqda, kuting...")
     await bot.send_message(
         b["boshlagan"],
@@ -290,7 +242,6 @@ async def rad_handler(call: CallbackQuery, bot: Bot):
     cur = db.cursor()
     cur.execute("SELECT * FROM bellashuv WHERE id = ?", (bellashuv_id,))
     b = cur.fetchone()
-    
     if b:
         await bot.send_message(
             b["boshlagan"],
@@ -307,28 +258,16 @@ async def bsoni_handler(call: CallbackQuery, state: FSMContext, bot: Bot):
     parts = call.data.split("_")
     bellashuv_id = int(parts[1])
     soni = int(parts[2])
-    
     if soni == 0:
         await state.set_state(BellashuvState.savol_soni)
         await state.update_data(bellashuv_id=bellashuv_id)
         await call.message.edit_text("✏️ Savol sonini yozing (5 tadan kam bo'lmasin):")
         return
-    
     await call.message.edit_text(f"✅ {soni} ta savol tanlandi! Bellashuv boshlanmoqda...")
     await boshlash_bellashuv(bot, bellashuv_id, soni)
 
 @router.message(BellashuvState.savol_soni)
 async def savol_soni_handler(message: Message, state: FSMContext, bot: Bot):
-    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
-        user = get_user(message.from_user.id)
-        lang = user["lang"] if user else "uz"
-        await state.clear()
-        await message.answer(
-            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-            reply_markup=main_keyboard(lang)
-        )
-        return
-    
     try:
         soni = int(message.text.strip())
         if soni < 5:
@@ -337,7 +276,6 @@ async def savol_soni_handler(message: Message, state: FSMContext, bot: Bot):
     except:
         await message.answer("⚠️ Faqat raqam yozing!")
         return
-    
     data = await state.get_data()
     bellashuv_id = data["bellashuv_id"]
     await state.clear()
@@ -355,14 +293,11 @@ async def boshlash_bellashuv(bot: Bot, bellashuv_id: int, soni: int):
     b = cur.fetchone()
     db.commit()
     db.close()
-    
     xabar = f"⚔️ *Bellashuv boshlandi!*\n\n📚 Fan: *{b['fan']}*\n❓ Savollar: *{soni}* ta\n\n1-savol tayyorlanmoqda..."
     await bot.send_message(b["boshlagan"], xabar, parse_mode="Markdown")
     await bot.send_message(b["raqib"], xabar, parse_mode="Markdown")
-    
     boshlagan = get_user(b["boshlagan"])
     raqib = get_user(b["raqib"])
-    
     for user_id, user_data in [(b["boshlagan"], boshlagan), (b["raqib"], raqib)]:
         await yuborish_savol(bot, b, user_id, user_data, 1)
 
@@ -372,10 +307,8 @@ async def yuborish_savol(bot: Bot, b, user_id: int, user_data, savol_raqam: int)
     lang = user_data["lang"]
     sinf = user_data["sinf"] or "10-sinf"
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    
     prompt = f"Sen AI ustoz botsan. {sinf} uchun {fan} fanidan bitta masala/misol ber {til}. Faqat masalani yoz, javobini yozma. Masala qisqa va tushunarli bo'lsin."
     savol = await groq_request(prompt)
-    
     db = get_db()
     cur = db.cursor()
     if user_id == b["boshlagan"]:
@@ -384,7 +317,6 @@ async def yuborish_savol(bot: Bot, b, user_id: int, user_data, savol_raqam: int)
         cur.execute("UPDATE bellashuv SET raqib_joriy_savol = ? WHERE id = ?", (savol, b["id"]))
     db.commit()
     db.close()
-    
     await bot.send_message(
         user_id,
         f"⚔️ *Bellashuv* | {fan} | {savol_raqam}/{savol_soni}\n\n📝 {savol}\n\nJavobingizni yozing:",
@@ -397,13 +329,11 @@ async def bellashuv_javob_handler(message: Message, bot: Bot):
     b = active_bellashuv(user_id)
     if not b:
         return
-    
     user = get_user(user_id)
     lang = user["lang"]
     fan = b["fan"]
     savol_soni = b["savol_soni"]
     is_boshlagan = (user_id == b["boshlagan"])
-    
     if is_boshlagan:
         hozirgi_savol_raqam = b["boshlagan_savol"]
         togri_ball = b["boshlagan_ball"]
@@ -412,26 +342,20 @@ async def bellashuv_javob_handler(message: Message, bot: Bot):
         hozirgi_savol_raqam = b["raqib_savol"]
         togri_ball = b["raqib_ball"]
         joriy_savol = b["raqib_joriy_savol"]
-    
     if not joriy_savol:
         return
-    
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
     prompt = f"""Savol: {joriy_savol}
 O'quvchi javobi: {message.text}
 Javobni tekshir {til}. Birinchi qatorda faqat 'TOGRI' yoki 'NOTOGRI' deb yoz, keyin tushuntir."""
-    
     natija = await groq_request(prompt)
     birinchi_qator = natija.strip().split("\n")[0].upper()
-    
     if "TOGRI" in birinchi_qator and "NOTOGRI" not in birinchi_qator:
         togri_ball += 1
         await message.answer(f"✅ To'g'ri! +1 ball 🎉\n\n{natija}")
     else:
         await message.answer(f"❌ Noto'g'ri!\n\n{natija}")
-    
     keyingi_savol_raqam = hozirgi_savol_raqam + 1
-    
     db = get_db()
     cur = db.cursor()
     if is_boshlagan:
@@ -444,34 +368,28 @@ Javobni tekshir {til}. Birinchi qatorda faqat 'TOGRI' yoki 'NOTOGRI' deb yoz, ke
             "UPDATE bellashuv SET raqib_ball = ?, raqib_savol = ?, raqib_joriy_savol = NULL WHERE id = ?",
             (togri_ball, keyingi_savol_raqam, b["id"])
         )
-    
     cur.execute("SELECT * FROM bellashuv WHERE id = ?", (b["id"],))
     b_yangi = cur.fetchone()
     db.commit()
     db.close()
-    
     boshlagan_tugadi = b_yangi["boshlagan_savol"] > savol_soni
     raqib_tugadi = b_yangi["raqib_savol"] > savol_soni
-    
     if boshlagan_tugadi and raqib_tugadi:
         boshlagan_ball = b_yangi["boshlagan_ball"]
         raqib_ball = b_yangi["raqib_ball"]
         boshlagan_user = get_user(b["boshlagan"])
         raqib_user = get_user(b["raqib"])
-        
         db = get_db()
         cur = db.cursor()
         cur.execute("UPDATE bellashuv SET holat = 'tugadi' WHERE id = ?", (b["id"],))
         db.commit()
         db.close()
-        
         if boshlagan_ball > raqib_ball:
             golib_nomi = boshlagan_user["name"]
         elif raqib_ball > boshlagan_ball:
             golib_nomi = raqib_user["name"]
         else:
             golib_nomi = None
-        
         if golib_nomi:
             natija_xabar = (
                 f"🏆 *Bellashuv tugadi!*\n\n"
@@ -487,10 +405,8 @@ Javobni tekshir {til}. Birinchi qatorda faqat 'TOGRI' yoki 'NOTOGRI' deb yoz, ke
                 f"👤 {boshlagan_user['name']}: {boshlagan_ball} ball\n"
                 f"👤 {raqib_user['name']}: {raqib_ball} ball"
             )
-        
         await bot.send_message(b["boshlagan"], natija_xabar, parse_mode="Markdown")
         await bot.send_message(b["raqib"], natija_xabar, parse_mode="Markdown")
-    
     elif keyingi_savol_raqam <= savol_soni:
         await yuborish_savol(bot, b_yangi, user_id, user, keyingi_savol_raqam)
     else:
