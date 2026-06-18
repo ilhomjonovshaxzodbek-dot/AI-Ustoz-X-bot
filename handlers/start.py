@@ -1,13 +1,12 @@
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery
 from aiogram.filters import CommandStart
+from aiogram.fsm.context import FSMContext
 from keyboards.inline_kb import lang_keyboard, sinf_keyboard, kurs_keyboard
 from keyboards.main_kb import main_keyboard, TEXTS
 from database import get_db
 
 router = Router()
-
-BEKOR_TEXTLAR = ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]
 
 async def send_lang_menu(message: Message, user_id: int):
     db = get_db()
@@ -29,9 +28,8 @@ async def send_lang_menu(message: Message, user_id: int):
         reply_markup=lang_keyboard()
     )
 
-@router.message(F.text.in_(BEKOR_TEXTLAR))
+@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]))
 async def global_bekor_handler(message: Message, state: FSMContext):
-    from aiogram.fsm.context import FSMContext
     user_id = message.from_user.id
     db = get_db()
     cur = db.cursor()
@@ -39,7 +37,6 @@ async def global_bekor_handler(message: Message, state: FSMContext):
     user = cur.fetchone()
     db.close()
     lang = user["lang"] if user else "uz"
-    
     await state.clear()
     await message.answer(
         "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
@@ -67,7 +64,6 @@ async def lang_handler(call: CallbackQuery):
     cur.execute("UPDATE users SET lang = ? WHERE tg_id = ?", (lang, call.from_user.id))
     db.commit()
     db.close()
-    
     await call.message.edit_text(
         "🎓 Sinfingizni tanlang:" if lang == "uz" else "🎓 Выберите класс:" if lang == "ru" else "🎓 Choose your class:",
         reply_markup=sinf_keyboard()
