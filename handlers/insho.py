@@ -37,16 +37,6 @@ async def insho_handler(message: Message, state: FSMContext):
 
 @router.message(InshoState.mavzu_kutish)
 async def mavzu_handler(message: Message, state: FSMContext):
-    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
-        user = get_user(message.from_user.id)
-        lang = user["lang"] if user else "uz"
-        await state.clear()
-        await message.answer(
-            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-            reply_markup=main_keyboard(lang)
-        )
-        return
-    
     user = get_user(message.from_user.id)
     lang = user["lang"]
     await state.update_data(mavzu=message.text)
@@ -58,24 +48,12 @@ async def mavzu_handler(message: Message, state: FSMContext):
 
 @router.message(InshoState.matn_kutish)
 async def matn_handler(message: Message, state: FSMContext):
-    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
-        user = get_user(message.from_user.id)
-        lang = user["lang"] if user else "uz"
-        await state.clear()
-        await message.answer(
-            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-            reply_markup=main_keyboard(lang)
-        )
-        return
-    
     user = get_user(message.from_user.id)
     lang = user["lang"]
     sinf = user["sinf"]
     data = await state.get_data()
     mavzu = data.get("mavzu")
-    
     await message.answer("⏳ Tekshirilmoqda..." if lang == "uz" else "⏳ Проверяю..." if lang == "ru" else "⏳ Checking...")
-    
     natija = await insho_tekshir(message.text, mavzu, sinf, lang)
     await state.clear()
     await message.answer(natija, reply_markup=main_keyboard(lang))
