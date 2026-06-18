@@ -36,22 +36,10 @@ async def tushuntir_handler(message: Message, state: FSMContext):
 
 @router.message(TushuntirState.kutish)
 async def tushuntir_javob_handler(message: Message, state: FSMContext):
-    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
-        user = get_user(message.from_user.id)
-        lang = user["lang"] if user else "uz"
-        await state.clear()
-        await message.answer(
-            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-            reply_markup=main_keyboard(lang)
-        )
-        return
-    
     user = get_user(message.from_user.id)
     lang = user["lang"]
     sinf = user["sinf"]
-    
     await message.answer("⏳ Tushuntirilmoqda..." if lang == "uz" else "⏳ Объясняю..." if lang == "ru" else "⏳ Explaining...")
-    
     javob = await tushuntir(message.text, sinf, lang)
     await state.clear()
     await message.answer(javob, reply_markup=main_keyboard(lang))
