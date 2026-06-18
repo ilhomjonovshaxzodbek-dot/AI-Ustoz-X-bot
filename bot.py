@@ -6,7 +6,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config import BOT_TOKEN
 from database import create_tables
 from middlewares.subscription import SubscriptionMiddleware
-from handlers import start, masala, savol, tushuntir, test, insho, eslatma, natijalar, reyting, sozlamalar, bellashuv, yutuqlar, haftalik, sevimli
+from handlers import start, masala, savol, tushuntir, test, insho, eslatma, natijalar, reyting, sozlamalar, bellashuv, yutuqlar, haftalik, sevimli, uyga_vazifa
 
 logging.basicConfig(level=logging.INFO)
 
@@ -88,10 +88,11 @@ async def main():
     dp.include_router(natijalar.router)
     dp.include_router(reyting.router)
     dp.include_router(sozlamalar.router)
-    dp.include_router(bellashuv.router)
     dp.include_router(yutuqlar.router)
     dp.include_router(haftalik.router)
     dp.include_router(sevimli.router)
+    dp.include_router(uyga_vazifa.router)
+    dp.include_router(bellashuv.router)
     
     asyncio.create_task(motivatsiya_yuborish(bot))
     asyncio.create_task(haftalik_yuborish_task(bot))
