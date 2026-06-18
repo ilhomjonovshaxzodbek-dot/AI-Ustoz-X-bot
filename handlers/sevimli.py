@@ -58,10 +58,8 @@ async def sevimli_handler(message: Message, state: FSMContext):
     user = get_user(message.from_user.id)
     lang = user["lang"] if user else "uz"
     tanlangan = get_tanlangan(message.from_user.id)
-    
     await state.set_state(SevimliState.tanlash)
     await state.update_data(tanlangan=tanlangan)
-    
     await message.answer(
         "📌 Sevimli fanlaringizni tanlang:" if lang == "uz" else "📌 Выберите любимые предметы:" if lang == "ru" else "📌 Choose your favorite subjects:",
         reply_markup=bekor_keyboard(lang)
@@ -71,27 +69,15 @@ async def sevimli_handler(message: Message, state: FSMContext):
         reply_markup=sevimli_fan_keyboard(lang, tanlangan)
     )
 
-@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), SevimliState.tanlash)
-async def sevimli_bekor(message: Message, state: FSMContext):
-    user = get_user(message.from_user.id)
-    lang = user["lang"] if user else "uz"
-    await state.clear()
-    await message.answer(
-        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-        reply_markup=main_keyboard(lang)
-    )
-
 @router.callback_query(F.data.startswith("sfan_"))
 async def sfan_tanlash(call: CallbackQuery, state: FSMContext):
     fan = call.data.split("_", 1)[1]
-    
+    user = get_user(call.from_user.id)
+    lang = user["lang"] if user else "uz"
+
     if fan == "saqlash":
-        user = get_user(call.from_user.id)
-        lang = user["lang"] if user else "uz"
-        
         data = await state.get_data()
         tanlangan = data.get("tanlangan", get_tanlangan(call.from_user.id))
-        
         db = get_db()
         cur = db.cursor()
         cur.execute("DELETE FROM sevimli_fanlar WHERE user_id = ?", (call.from_user.id,))
@@ -99,35 +85,23 @@ async def sfan_tanlash(call: CallbackQuery, state: FSMContext):
             cur.execute("INSERT INTO sevimli_fanlar (user_id, fan) VALUES (?, ?)", (call.from_user.id, f))
         db.commit()
         db.close()
-        
         await state.clear()
         await call.message.edit_text(
             f"✅ Saqlandi!\n\n📌 Sevimli fanlar: {', '.join(tanlangan) if tanlangan else 'Tanlanmagan'}" if lang == "uz"
             else f"✅ Сохранено!\n\n📌 Любимые предметы: {', '.join(tanlangan) if tanlangan else 'Не выбрано'}" if lang == "ru"
             else f"✅ Saved!\n\n📌 Favorite subjects: {', '.join(tanlangan) if tanlangan else 'None selected'}"
         )
-        await call.message.answer(
-            "📋 Menyu:" if lang == "uz" else "📋 Меню:" if lang == "ru" else "📋 Menu:",
-            reply_markup=main_keyboard(lang)
-        )
+        await call.message.answer("📋 Menyu:", reply_markup=main_keyboard(lang))
         return
-    
-    user = get_user(call.from_user.id)
-    lang = user["lang"] if user else "uz"
-    
+
     data = await state.get_data()
     tanlangan = list(data.get("tanlangan", get_tanlangan(call.from_user.id)))
-    
     if fan in tanlangan:
         tanlangan.remove(fan)
     else:
         tanlangan.append(fan)
-    
     await state.update_data(tanlangan=tanlangan)
-    
     try:
-        await call.message.edit_reply_markup(
-            reply_markup=sevimli_fan_keyboard(lang, tanlangan)
-        )
+        await call.message.edit_reply_markup(reply_markup=sevimli_fan_keyboard(lang, tanlangan))
     except:
         pass
