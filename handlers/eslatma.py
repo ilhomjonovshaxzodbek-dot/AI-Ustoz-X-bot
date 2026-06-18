@@ -4,6 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from keyboards.main_kb import main_keyboard, bekor_keyboard, TEXTS
 from database import get_db
+import re
 
 router = Router()
 
@@ -24,15 +25,12 @@ def get_user(user_id):
 async def eslatma_handler(message: Message, state: FSMContext):
     user = get_user(message.from_user.id)
     lang = user["lang"] if user else "uz"
-    
     db = get_db()
     cur = db.cursor()
     cur.execute("SELECT vaqt, active FROM eslatmalar WHERE user_id = ?", (message.from_user.id,))
     eslatma = cur.fetchone()
     db.close()
-    
     await state.set_state(EslatmaState.vaqt_kutish)
-    
     if eslatma and eslatma["active"]:
         await message.answer(
             f"🔔 Eslatma {eslatma['vaqt']} da o'rnatilgan.\n\nO'zgartirish uchun yangi vaqt yozing (HH:MM):" if lang == "uz"
@@ -50,21 +48,9 @@ async def eslatma_handler(message: Message, state: FSMContext):
 
 @router.message(EslatmaState.vaqt_kutish)
 async def vaqt_handler(message: Message, state: FSMContext):
-    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
-        user = get_user(message.from_user.id)
-        lang = user["lang"] if user else "uz"
-        await state.clear()
-        await message.answer(
-            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-            reply_markup=main_keyboard(lang)
-        )
-        return
-    
     user = get_user(message.from_user.id)
     lang = user["lang"] if user else "uz"
     vaqt = message.text.strip()
-    
-    import re
     if not re.match(r"^\d{2}:\d{2}$", vaqt):
         await message.answer(
             "❌ Noto'g'ri format! HH:MM formatda yozing (masalan: 08:00)" if lang == "uz"
@@ -72,7 +58,6 @@ async def vaqt_handler(message: Message, state: FSMContext):
             else "❌ Wrong format! Write in HH:MM format (e.g. 08:00)"
         )
         return
-    
     db = get_db()
     cur = db.cursor()
     cur.execute(
@@ -81,7 +66,6 @@ async def vaqt_handler(message: Message, state: FSMContext):
     )
     db.commit()
     db.close()
-    
     await state.clear()
     await message.answer(
         f"✅ Eslatma {vaqt} ga o'rnatildi!" if lang == "uz"
