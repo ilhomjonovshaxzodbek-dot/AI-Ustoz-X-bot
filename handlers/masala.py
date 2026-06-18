@@ -21,18 +21,6 @@ def get_user(user_id):
     db.close()
     return user
 
-@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]))
-async def bekor_handler(message: Message, state: FSMContext):
-    user = get_user(message.from_user.id)
-    lang = user["lang"] if user else "uz"
-    current_state = await state.get_state()
-    if current_state and "Masala" in current_state:
-        await state.clear()
-        await message.answer(
-            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-            reply_markup=main_keyboard(lang)
-        )
-
 @router.message(F.text.in_([
     TEXTS["uz"]["masala"], TEXTS["ru"]["masala"], TEXTS["en"]["masala"]
 ]))
@@ -58,13 +46,10 @@ async def fan_tanlash_handler(call: CallbackQuery, state: FSMContext):
     user = get_user(call.from_user.id)
     lang = user["lang"]
     sinf = user["sinf"]
-    
     await call.message.edit_text("⏳ Masala tayyorlanmoqda..." if lang == "uz" else "⏳ Готовлю задачу..." if lang == "ru" else "⏳ Preparing task...")
-    
     masala = await masala_ber(sinf, fan, lang)
     await state.update_data(masala=masala, fan=fan)
     await state.set_state(MasalaState.javob_kutish)
-    
     await call.message.edit_text(
         f"📚 *{fan}* | {sinf}\n\n{masala}\n\n"
         + ("✏️ Javobingizni yozing:" if lang == "uz" else "✏️ Напишите ответ:" if lang == "ru" else "✏️ Write your answer:"),
@@ -73,38 +58,21 @@ async def fan_tanlash_handler(call: CallbackQuery, state: FSMContext):
 
 @router.message(MasalaState.javob_kutish)
 async def javob_handler(message: Message, state: FSMContext):
-    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
-        user = get_user(message.from_user.id)
-        lang = user["lang"] if user else "uz"
-        await state.clear()
-        await message.answer(
-            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-            reply_markup=main_keyboard(lang)
-        )
-        return
-    
     user = get_user(message.from_user.id)
     lang = user["lang"]
     sinf = user["sinf"]
     data = await state.get_data()
     masala = data.get("masala")
-    
     await message.answer("⏳ Tekshirilmoqda..." if lang == "uz" else "⏳ Проверяю..." if lang == "ru" else "⏳ Checking...")
-    
     natija = await javob_tekshir(masala, message.text, sinf, lang)
-    
     db = get_db()
     cur = db.cursor()
     togri = 1 if "to'g'ri" in natija.lower() or "правильно" in natija.lower() or "correct" in natija.lower() else 0
-    cur.execute(
-        "INSERT INTO masalalar (user_id, masala, javob, togri) VALUES (?, ?, ?, ?)",
-        (message.from_user.id, masala, message.text, togri)
-    )
+    cur.execute("INSERT INTO masalalar (user_id, masala, javob, togri) VALUES (?, ?, ?, ?)",
+                (message.from_user.id, masala, message.text, togri))
     db.commit()
     db.close()
-    
     await state.clear()
     await message.answer(natija, reply_markup=main_keyboard(lang))
-    
     from handlers.yutuqlar import yutuq_tekshir
     await yutuq_tekshir(message.bot, message.from_user.id)
