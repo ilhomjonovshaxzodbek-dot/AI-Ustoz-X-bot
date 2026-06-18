@@ -14,6 +14,8 @@ def create_tables():
             id INTEGER PRIMARY KEY,
             tg_id INTEGER UNIQUE,
             name TEXT,
+            ism TEXT,
+            familya TEXT,
             lang TEXT DEFAULT 'uz',
             sinf TEXT,
             type TEXT,
@@ -79,6 +81,15 @@ def create_tables():
             sana TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         );
     """)
+    
+    try:
+        cur.execute("ALTER TABLE users ADD COLUMN ism TEXT")
+    except:
+        pass
+    try:
+        cur.execute("ALTER TABLE users ADD COLUMN familya TEXT")
+    except:
+        pass
     
     conn.commit()
     conn.close()
