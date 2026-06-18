@@ -40,26 +40,6 @@ async def uyga_vazifa_handler(message: Message, state: FSMContext):
         reply_markup=fan_keyboard(lang)
     )
 
-@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), UygaVazifaState.fan_tanlash)
-async def uyga_bekor_fan(message: Message, state: FSMContext):
-    user = get_user(message.from_user.id)
-    lang = user["lang"] if user else "uz"
-    await state.clear()
-    await message.answer(
-        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-        reply_markup=main_keyboard(lang)
-    )
-
-@router.message(F.text.in_(["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]), UygaVazifaState.javob_kutish)
-async def uyga_bekor_javob(message: Message, state: FSMContext):
-    user = get_user(message.from_user.id)
-    lang = user["lang"] if user else "uz"
-    await state.clear()
-    await message.answer(
-        "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-        reply_markup=main_keyboard(lang)
-    )
-
 @router.callback_query(F.data.startswith("fan_"), UygaVazifaState.fan_tanlash)
 async def uyga_fan_handler(call: CallbackQuery, state: FSMContext):
     fan = call.data.split("_", 1)[1]
@@ -73,12 +53,11 @@ async def uyga_fan_handler(call: CallbackQuery, state: FSMContext):
     )
     
     prompt = f"""Sen AI ustoz botsan. {sinf} uchun {fan} fanidan uyga vazifa ber {til}.
-Vazifa qiziqarli va o'quvchinning darajasiga mos bo'lsin.
+Vazifa qiziqarli va o'quvchining darajasiga mos bo'lsin.
 3-5 ta topshiriq ber. Har bir topshiriq raqamlangan bo'lsin.
 Faqat vazifani yoz, javobini yozma."""
     
     vazifa = await groq_request(prompt)
-    
     await state.update_data(fan=fan, sinf=sinf, vazifa=vazifa)
     await state.set_state(UygaVazifaState.javob_kutish)
     
@@ -90,16 +69,6 @@ Faqat vazifani yoz, javobini yozma."""
 
 @router.message(UygaVazifaState.javob_kutish)
 async def uyga_javob_handler(message: Message, state: FSMContext):
-    if message.text in ["❌ Bekor qilish", "❌ Отмена", "❌ Cancel"]:
-        user = get_user(message.from_user.id)
-        lang = user["lang"] if user else "uz"
-        await state.clear()
-        await message.answer(
-            "❌ Bekor qilindi." if lang == "uz" else "❌ Отменено." if lang == "ru" else "❌ Cancelled.",
-            reply_markup=main_keyboard(lang)
-        )
-        return
-    
     user = get_user(message.from_user.id)
     lang = user["lang"]
     sinf = user["sinf"]
@@ -127,7 +96,6 @@ Quyidagilarni yoz:
 4. Rag'batlantiruvchi so'z"""
     
     natija = await groq_request(prompt)
-    
     await state.clear()
     await message.answer(
         f"📋 *Uyga vazifa natijasi* | {fan}\n\n{natija}",
