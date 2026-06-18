@@ -24,24 +24,30 @@ async def groq_request(prompt: str) -> str:
     except Exception as e:
         return f"Xatolik: {e}"
 
-async def masala_ber(sinf: str, fan: str, lang: str) -> str:
+async def masala_ber(sinf: str, fan: str, lang: str, ism: str = "") -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    prompt = f"Sen AI ustoz botsan. {sinf} uchun {fan} fanidan bitta masala/misol ber {til}. Faqat masalani yoz, javobini yozma. Masala qisqa va tushunarli bo'lsin."
+    chaqirish = f"{ism}," if ism else ""
+    prompt = f"Sen AI ustoz botsan. {chaqirish} {sinf} uchun {fan} fanidan bitta masala/misol ber {til}. Faqat masalani yoz, javobini yozma. Masala qisqa va tushunarli bo'lsin."
     return await groq_request(prompt)
 
-async def javob_tekshir(masala: str, foydalanuvchi_javobi: str, sinf: str, lang: str) -> str:
+async def javob_tekshir(masala: str, foydalanuvchi_javobi: str, sinf: str, lang: str, ism: str = "") -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    prompt = f"Sen AI ustoz botsan. Quyidagi masalani tekshir {til}:\nMasala: {masala}\nO'quvchi javobi: {foydalanuvchi_javobi}\nO'quvchi sinfi: {sinf}\nJavob to'g'rimi yoki noto'g'rimi ayt. Agar noto'g'ri bo'lsa to'g'ri yechimni bosqichma-bosqich tushuntir."
+    chaqirish = f"{ism}," if ism else ""
+    prompt = f"Sen AI ustoz botsan. {chaqirish} quyidagi masalani tekshir {til}:\nMasala: {masala}\nO'quvchi javobi: {foydalanuvchi_javobi}\nO'quvchi sinfi: {sinf}\nJavob to'g'rimi yoki noto'g'rimi ayt. Agar noto'g'ri bo'lsa to'g'ri yechimni bosqichma-bosqich tushuntir."
     return await groq_request(prompt)
 
-async def savol_javob(savol: str, sinf: str, lang: str) -> str:
+async def savol_javob(savol: str, sinf: str, lang: str, ism: str = "", uzun: bool = False) -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    prompt = f"Sen AI ustoz botsan. O'quvchi savol berdi {til}.\nO'quvchi sinfi: {sinf}\nSavol: {savol}\nTushunarli va qisqa tushuntir. Kerak bo'lsa misol keltir."
+    chaqirish = f"{ism}," if ism else ""
+    uzunlik = "batafsil va to'liq" if uzun else "qisqa va aniq"
+    prompt = f"Sen AI ustoz botsan. {chaqirish} O'quvchi savol berdi {til}.\nO'quvchi sinfi: {sinf}\nSavol: {savol}\n{uzunlik} tushuntir. Kerak bo'lsa misol keltir."
     return await groq_request(prompt)
 
-async def tushuntir(mavzu: str, sinf: str, lang: str) -> str:
+async def tushuntir(mavzu: str, sinf: str, lang: str, ism: str = "", uzun: bool = False) -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    prompt = f"Sen AI ustoz botsan. Quyidagi mavzuni {sinf} o'quvchisiga {til} tushuntir:\nMavzu: {mavzu}\nBatafsil va tushunarli tushuntir. Misol keltir."
+    chaqirish = f"{ism}," if ism else ""
+    uzunlik = "batafsil va to'liq" if uzun else "qisqa va aniq"
+    prompt = f"Sen AI ustoz botsan. {chaqirish} quyidagi mavzuni {sinf} o'quvchisiga {til} {uzunlik} tushuntir:\nMavzu: {mavzu}\nMisol keltir."
     return await groq_request(prompt)
 
 async def test_ber(sinf: str, fan: str, lang: str) -> dict:
@@ -57,7 +63,8 @@ Faqat JSON formatda yoz, boshqa hech narsa yozma:
     except:
         return None
 
-async def insho_tekshir(matn: str, mavzu: str, sinf: str, lang: str) -> str:
+async def insho_tekshir(matn: str, mavzu: str, sinf: str, lang: str, ism: str = "") -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    prompt = f"Sen AI ustoz botsan. O'quvchining inshosini tekshir {til}.\nO'quvchi sinfi: {sinf}\nMavzu: {mavzu}\nInsho:\n{matn}\nBaho ber (1-10), kuchli va zaif tomonlarini ayt, tavsiyalar ber."
+    chaqirish = f"{ism}," if ism else ""
+    prompt = f"Sen AI ustoz botsan. {chaqirish} o'quvchining inshosini tekshir {til}.\nO'quvchi sinfi: {sinf}\nMavzu: {mavzu}\nInsho:\n{matn}\nBaho ber (1-10), kuchli va zaif tomonlarini ayt, tavsiyalar ber."
     return await groq_request(prompt)
