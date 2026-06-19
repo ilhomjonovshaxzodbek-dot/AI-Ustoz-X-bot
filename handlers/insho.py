@@ -51,9 +51,10 @@ async def matn_handler(message: Message, state: FSMContext):
     user = get_user(message.from_user.id)
     lang = user["lang"]
     sinf = user["sinf"]
+    ism = user["ism"] or ""
     data = await state.get_data()
     mavzu = data.get("mavzu")
     await message.answer("⏳ Tekshirilmoqda..." if lang == "uz" else "⏳ Проверяю..." if lang == "ru" else "⏳ Checking...")
-    natija = await insho_tekshir(message.text, mavzu, sinf, lang)
+    natija = await insho_tekshir(message.text, mavzu, sinf, lang, ism)
     await state.clear()
     await message.answer(natija, reply_markup=main_keyboard(lang))
