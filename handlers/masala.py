@@ -46,8 +46,9 @@ async def fan_tanlash_handler(call: CallbackQuery, state: FSMContext):
     user = get_user(call.from_user.id)
     lang = user["lang"]
     sinf = user["sinf"]
+    ism = user["ism"] or ""
     await call.message.edit_text("⏳ Masala tayyorlanmoqda..." if lang == "uz" else "⏳ Готовлю задачу..." if lang == "ru" else "⏳ Preparing task...")
-    masala = await masala_ber(sinf, fan, lang)
+    masala = await masala_ber(sinf, fan, lang, ism)
     await state.update_data(masala=masala, fan=fan)
     await state.set_state(MasalaState.javob_kutish)
     await call.message.edit_text(
@@ -61,10 +62,11 @@ async def javob_handler(message: Message, state: FSMContext):
     user = get_user(message.from_user.id)
     lang = user["lang"]
     sinf = user["sinf"]
+    ism = user["ism"] or ""
     data = await state.get_data()
     masala = data.get("masala")
     await message.answer("⏳ Tekshirilmoqda..." if lang == "uz" else "⏳ Проверяю..." if lang == "ru" else "⏳ Checking...")
-    natija = await javob_tekshir(masala, message.text, sinf, lang)
+    natija = await javob_tekshir(masala, message.text, sinf, lang, ism)
     db = get_db()
     cur = db.cursor()
     togri = 1 if "to'g'ri" in natija.lower() or "правильно" in natija.lower() or "correct" in natija.lower() else 0
