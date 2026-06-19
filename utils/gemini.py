@@ -26,28 +26,58 @@ async def groq_request(prompt: str) -> str:
 
 async def masala_ber(sinf: str, fan: str, lang: str, ism: str = "") -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    chaqirish = f"{ism}," if ism else ""
-    prompt = f"Sen AI ustoz botsan. {chaqirish} {sinf} uchun {fan} fanidan bitta masala/misol ber {til}. Faqat masalani yoz, javobini yozma. Masala qisqa va tushunarli bo'lsin."
+    ism_korsatma = f"O'quvchining ismi {ism}. Masalani '{ism}' deb murojaat qilib boshla." if ism else ""
+    prompt = f"""Sen AI ustoz botsan. {ism_korsatma}
+{sinf} uchun {fan} fanidan bitta masala/misol ber {til}. Faqat masalani yoz, javobini yozma. Masala qisqa va tushunarli bo'lsin."""
     return await groq_request(prompt)
 
 async def javob_tekshir(masala: str, foydalanuvchi_javobi: str, sinf: str, lang: str, ism: str = "") -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    chaqirish = f"{ism}," if ism else ""
-    prompt = f"Sen AI ustoz botsan. {chaqirish} quyidagi masalani tekshir {til}:\nMasala: {masala}\nO'quvchi javobi: {foydalanuvchi_javobi}\nO'quvchi sinfi: {sinf}\nJavob to'g'rimi yoki noto'g'rimi ayt. Agar noto'g'ri bo'lsa to'g'ri yechimni bosqichma-bosqich tushuntir."
+    ism_korsatma = f"O'quvchining ismi {ism}. Javobni '{ism}' deb murojaat qilib boshla." if ism else ""
+    prompt = f"""Sen AI ustoz botsan. {ism_korsatma}
+Quyidagi masalani tekshir {til}:
+Masala: {masala}
+O'quvchi javobi: {foydalanuvchi_javobi}
+O'quvchi sinfi: {sinf}
+Javob to'g'rimi yoki noto'g'rimi ayt. Agar noto'g'ri bo'lsa to'g'ri yechimni bosqichma-bosqich tushuntir."""
     return await groq_request(prompt)
 
 async def savol_javob(savol: str, sinf: str, lang: str, ism: str = "", uzun: bool = False) -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    chaqirish = f"{ism}," if ism else ""
-    uzunlik = "batafsil va to'liq" if uzun else "qisqa va aniq"
-    prompt = f"Sen AI ustoz botsan. {chaqirish} O'quvchi savol berdi {til}.\nO'quvchi sinfi: {sinf}\nSavol: {savol}\n{uzunlik} tushuntir. Kerak bo'lsa misol keltir."
+    
+    if uzun:
+        uzunlik_korsatma = "BATAFSIL javob ber: kamida 150-200 so'z, misollar bilan, bosqichma-bosqich tushuntir."
+    else:
+        uzunlik_korsatma = "QISQA javob ber: maksimum 2-3 jumla, faqat asosiy javob, ortiqcha tushuntirishsiz."
+    
+    ism_korsatma = f"O'quvchining ismi {ism}. Javobni '{ism}' deb murojaat qilib boshla." if ism else ""
+    
+    prompt = f"""Sen AI ustoz botsan. {ism_korsatma}
+O'quvchi sinfi: {sinf}
+Savol: {savol}
+
+MUHIM QOIDA: {uzunlik_korsatma}
+
+Javobni {til} yoz."""
     return await groq_request(prompt)
 
 async def tushuntir(mavzu: str, sinf: str, lang: str, ism: str = "", uzun: bool = False) -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    chaqirish = f"{ism}," if ism else ""
-    uzunlik = "batafsil va to'liq" if uzun else "qisqa va aniq"
-    prompt = f"Sen AI ustoz botsan. {chaqirish} quyidagi mavzuni {sinf} o'quvchisiga {til} {uzunlik} tushuntir:\nMavzu: {mavzu}\nMisol keltir."
+    
+    if uzun:
+        uzunlik_korsatma = "BATAFSIL tushuntir: kamida 150-200 so'z, misollar bilan, bosqichma-bosqich."
+    else:
+        uzunlik_korsatma = "QISQA tushuntir: maksimum 2-3 jumla, faqat eng muhim narsani ayt."
+    
+    ism_korsatma = f"O'quvchining ismi {ism}. Tushuntirishni '{ism}' deb murojaat qilib boshla." if ism else ""
+    
+    prompt = f"""Sen AI ustoz botsan. {ism_korsatma}
+O'quvchi sinfi: {sinf}
+Mavzu: {mavzu}
+
+MUHIM QOIDA: {uzunlik_korsatma}
+
+Tushuntirishni {til} yoz."""
     return await groq_request(prompt)
 
 async def test_ber(sinf: str, fan: str, lang: str) -> dict:
@@ -65,6 +95,12 @@ Faqat JSON formatda yoz, boshqa hech narsa yozma:
 
 async def insho_tekshir(matn: str, mavzu: str, sinf: str, lang: str, ism: str = "") -> str:
     til = {"uz": "o'zbek tilida", "ru": "на русском языке", "en": "in English"}.get(lang, "o'zbek tilida")
-    chaqirish = f"{ism}," if ism else ""
-    prompt = f"Sen AI ustoz botsan. {chaqirish} o'quvchining inshosini tekshir {til}.\nO'quvchi sinfi: {sinf}\nMavzu: {mavzu}\nInsho:\n{matn}\nBaho ber (1-10), kuchli va zaif tomonlarini ayt, tavsiyalar ber."
+    ism_korsatma = f"O'quvchining ismi {ism}. Baholashni '{ism}' deb murojaat qilib boshla." if ism else ""
+    prompt = f"""Sen AI ustoz botsan. {ism_korsatma}
+O'quvchining inshosini tekshir {til}.
+O'quvchi sinfi: {sinf}
+Mavzu: {mavzu}
+Insho:
+{matn}
+Baho ber (1-10), kuchli va zaif tomonlarini ayt, tavsiyalar ber."""
     return await groq_request(prompt)
